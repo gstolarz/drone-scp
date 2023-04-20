@@ -110,6 +110,7 @@ func (p *Plugin) Execute() error {
     }
 
     var contents io.Reader
+    var size int64
 
     if p.settings.Templating {
         tmpl, err := template.ParseFiles(p.settings.Source)
@@ -131,12 +132,15 @@ func (p *Plugin) Execute() error {
             return fmt.Errorf("error while executing template: %w", err)
         }
 
-        contents = strings.NewReader(tpl.String())
+        var v = tpl.String()
+        contents = strings.NewReader(v)
+        size = int64(len(v))
     } else {
         contents = f
+        size = s.Size()
     }
 
-    err = scp.Copy(s.Size(), s.Mode().Perm(), path.Base(p.settings.Source), contents, p.settings.Target, session)
+    err = scp.Copy(size, s.Mode().Perm(), path.Base(p.settings.Source), contents, p.settings.Target, session)
     if err != nil {
         return fmt.Errorf("error while copying file: %w", err)
     }
